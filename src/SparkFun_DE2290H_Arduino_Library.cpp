@@ -1,0 +1,499 @@
+/*
+  This is a library written for the DE2290H 2D Barcode Scanner Engine
+
+  SparkFun sells these at its website: www.sparkfun.com
+
+  Do you like this library? Help support SparkFun. Buy a board!
+  https://www.sparkfun.com/products/TBD
+
+  Written by SparkFun Electronics, January, 2026
+
+  The DE2290H is a camera-based barcode scanner
+  https://github.com/sparkfun/SparkFun_DE2290H_Arduino_Library
+
+  This is a rework of the original library written by Nick Poole @SparkFun in 2020 for the DE2120:
+  https://github.com/sparkfun/SparkFun_DE2120_Arduino_Library
+
+  Development environment specifics:
+
+  Arduino IDE 1.8.7
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include "SparkFun_DE2290H_Arduino_Library.h"
+#include "Arduino.h"
+
+#include <SoftwareSerial.h>
+
+//Constructor
+DE2290H::DE2290H(void)
+{
+}  
+
+//Initializes the device with basic settings
+//Returns false if device is not detected
+bool DE2290H::begin(HardwareSerial &serialPort)
+{
+  //Trick comes from: https://forum.arduino.cc/index.php?topic=503782.msg3435988#msg3435988
+  hwStream = &serialPort;
+  swStream = NULL;
+  _serial = hwStream;
+
+  if (isConnected() == false)
+    return false; //No device detected
+
+  //Clear any remaining incoming chars. The prevents a mis-read of the first barcode.
+  while (_serial->available())
+    _serial->read();
+
+  return true; //We're all setup!
+}
+
+bool DE2290H::begin(SoftwareSerial &serialPort)
+{
+  //Serial.println("I am software");
+  swStream = &serialPort;
+  hwStream = NULL;
+  _serial = swStream;
+
+  if (isConnected() == false)
+    return false; //No device detected
+
+  //Clear any remaining incoming chars. The prevents a mis-read of the first barcode.
+  while (_serial->available())
+    _serial->read();
+
+  return true; //We're all setup!
+}
+
+// Try to retrieve the firmware version number as a
+// test to determine whether the module is connected.
+// We're only testing to see if we got an ACK response,
+// We don't ever check the actual firmware number.
+bool DE2290H::isConnected()
+{
+  //Attempt initial comm at 9600
+  if (hwStream)
+    hwStream->begin(9600);
+  else
+    swStream->begin(9600);
+
+  if (sendCommand(kCmdGetVersion, "", 800)) //Takes ~430ms to get firmware version response
+    return true;
+
+  //If we failed, try again at the factory default of 115200bps
+  if (hwStream)
+    hwStream->begin(115200);
+  else
+    swStream->begin(115200);
+
+  delay(10);
+
+  // Go to 9600bps
+  if (!changeBaudRate(DE2290H_Baud_9600)) {
+    return false;
+  }
+  //300ms is too quick for module to switch to new setting
+
+  //Return to 9600bps
+  if (hwStream)
+    hwStream->begin(9600);
+  else
+    swStream->begin(9600);
+
+  delay(10);
+
+  if (sendCommand(kCmdGetVersion, "", 800)) //Takes ~430ms to get firmware version response
+    return true;
+
+  return false;
+}
+
+// Revert module to all factory default settings
+// THIS WILL DISCONNECT THE MODULE FROM SERIAL
+bool DE2290H::factoryDefault()
+{
+  return (sendCommand(kCmdRestoreDefaults));
+}
+
+bool DE2290H::available()
+{
+  return _serial->available();
+}
+
+int DE2290H::read()
+{
+  return _serial->read();
+}
+
+// Construct a command or parameter and send it to the
+// module, then check the serial buffer for a response.
+// Return TRUE if response contains ACK character, else
+// return FALSE
+bool DE2290H::sendCommand(const char *cmd, const char *arg, uint32_t maxWaitInms)
+{
+  char commandString[14] = {'\0'};
+  char start[] = kDE2290HMetaCharPrefix;
+  char end[] = kDE2290HMetaCharSuffix;
+
+  strcat(commandString, start);
+  strcat(commandString, cmd);
+  strcat(commandString, arg);
+  strcat(commandString, end);
+
+  _serial->print(commandString);
+
+  uint32_t timeout = millis() + maxWaitInms;
+
+  while (millis() < timeout)
+  {
+    if (_serial->available())
+    {
+      while (_serial->available())
+      {
+        byte incoming = _serial->read();
+        if (incoming == kDE2290HResponseAck)
+          return true;
+        else if (incoming == kDE2290HResponseNack)
+          return false;
+      }
+    }
+    delay(1);
+  }
+
+  return false;
+}
+
+// Check the receive buffer for serial data
+// from the barcode scanner. If there's data,
+// check the result buffer for a CR (marks a
+// complete scan) If a CR is found, we overwrite the
+// result buffer until either it's full or we
+// reach a CR in the receive buffer.
+bool DE2290H::readBarcode(char *resultBuffer, uint8_t size)
+{
+  if (!_serial->available())
+    return false;
+
+  bool crFound = false;
+  for (uint8_t idx = 0; idx < size; idx++)
+  {
+    if (resultBuffer[idx] == '\r')
+      crFound = true;
+  }
+
+  if (crFound)
+    resultBuffer[0] = '\0';
+
+  for (uint8_t idx = strlen(resultBuffer); idx < size; idx++)
+  {
+    if (_serial->available())
+    {
+      resultBuffer[idx] = _serial->read();
+      if (resultBuffer[idx] == '\r')
+      {
+        resultBuffer[idx+1] = '\0';
+        return true;
+      }
+    }
+    else
+      return false;
+  }
+
+  return false;
+}
+
+// Change the module's baud rate
+bool DE2290H::changeBaudRate(DE2290H_Baud_t baud){
+  switch(baud){
+    case DE2290H_Baud_4800:
+      return (sendCommand(kCmdSerialBaud4800));
+    case DE2290H_Baud_9600:
+      return (sendCommand(kCmdSerialBaud9600));
+    case DE2290H_Baud_19200:
+      return (sendCommand(kCmdSerialBaud19200));
+    case DE2290H_Baud_38400:
+      return (sendCommand(kCmdSerialBaud38400));
+    case DE2290H_Baud_57600:
+      return (sendCommand(kCmdSerialBaud57600));
+    case DE2290H_Baud_115200:
+      return (sendCommand(kCmdSerialBaud115200));
+    default:
+      return false;
+  }
+}
+
+// Enable Decode Beep
+bool DE2290H::enableDecodeBeep(bool enable=true)
+{
+  if (enable)
+    return (sendCommand(kCmdEnableDecodeSound));
+  
+  return (sendCommand(kCmdDisableDecodeSound));
+}
+
+// Disable Decode Beep
+bool DE2290H::disableDecodeBeep()
+{
+  return enableDecodeBeep(false);
+}
+
+// Enable and Disable Beep sound on setting changes
+bool DE2290H::enableSettingBeep(bool enable=true)
+{
+  if (enable)
+    return (sendCommand(kCmdEnableSettingSound));
+  
+  return (sendCommand(kCmdDisableSettingSound));
+}
+
+bool DE2290H::disableSettingBeep()
+{
+  return enableSettingBeep(false);
+}
+
+// Enable and Disable Beed sound on startup
+bool DE2290H::enableBootBeep(bool enable=true)
+{
+  if (enable)
+    return (sendCommand(kCmdEnableBootSound));
+  
+  return (sendCommand(kCmdDisableBootSound));
+}
+bool DE2290H::disableBootBeep()
+{
+  return enableBootBeep(false);
+}
+
+bool DE2290H::enableAllBeep(bool enable=true)
+{
+  if (enable){
+    if (!enableBootBeep())
+      return false;
+    if (!enableSettingBeep())
+      return false;
+    if (!enableDecodeBeep())
+      return false;
+  }
+
+  else{
+    if (!disableBootBeep())
+      return false;
+    if (!disableSettingBeep())
+      return false;
+    if (!disableDecodeBeep())
+      return false;
+  }
+
+  return true;
+}
+
+bool DE2290H::disableAllBeep()
+{
+  return enableAllBeep(false);
+}
+
+// Change Buzzer Volume
+bool DE2290H::changeBuzzerVolume(DE2290H_Volume_t volume)
+{
+  if (volume > DE2290H_Volume_High)
+    return false;
+
+  if (volume == DE2290H_Volume_Low)
+    return (sendCommand(kCmdVolumeLow));
+  else if (volume == DE2290H_Volume_Medium)
+    return (sendCommand(kCmdVolumeMedium));
+  else if (volume == DE2290H_Volume_High)
+    return (sendCommand(kCmdVolumeHigh));
+
+  return false;
+}
+
+// Change Success Beep Frequency
+bool DE2290H::changeSuccessBeepFrequency(DE2290H_Frequency_t frequency)
+{
+  if (frequency > DE2290H_Frequency_High)
+    return false;
+
+  if (frequency == DE2290H_Frequency_Low)
+    return (sendCommand(kCmdSuccessBeepFreqLow));
+  else if (frequency == DE2290H_Frequency_Medium)
+    return (sendCommand(kCmdSuccessBeepFreqMedium));
+  else if (frequency == DE2290H_Frequency_High)
+    return (sendCommand(kCmdSuccessBeepFreqHigh));
+
+  return false;
+}
+
+// Change Error Beep Frequency
+bool DE2290H::changeErrorBeepFrequency(DE2290H_Frequency_t frequency)
+{
+  if (frequency > DE2290H_Frequency_High)
+    return false;
+
+  if (frequency == DE2290H_Frequency_Low)
+    return (sendCommand(kCmdErrorBeepFreqLow));
+  else if (frequency == DE2290H_Frequency_Medium)
+    return (sendCommand(kCmdErrorBeepFreqMedium));
+  else if (frequency == DE2290H_Frequency_High)
+    return (sendCommand(kCmdErrorBeepFreqHigh));
+
+  return false;
+}
+
+// Control the white illumination LED
+bool DE2290H::lightOn(bool on=true)
+{
+  if (on)
+    return (sendCommand(kCmdEnableFlashlight));
+  
+  return (sendCommand(kCmdDisableFlashlight));
+}
+bool DE2290H::lightOff()
+{
+  return lightOn(false);
+}
+
+// Control the red scan line
+bool DE2290H::reticleOn(bool on=true)
+{
+  if (on)
+    return (sendCommand(kCmdEnableReticle));
+  
+  return (sendCommand(kCmdDisableReticle));
+}
+bool DE2290H::reticleOff()
+{
+  return reticleOn(false);
+}
+
+// Enable and Disable Mirror Image reading
+bool DE2290H::enableReverseScan(bool enable=true)
+{
+  if (enable){
+    if (!sendCommand(kCmdEnable1DReversal))
+      return false;
+    if (!sendCommand(kCmdEnable2DReversal))
+      return false;
+  }
+
+  else {
+    if (!sendCommand(kCmdDisable1DReversal))
+      return false;
+    if (!sendCommand(kCmdDisable2DReversal))
+      return false;
+  }
+
+  return true;
+}
+
+bool DE2290H::disableReverseScan()
+{
+  return enableReverseScan(false);
+}
+
+// Enable USB Communication and set the mode
+// THIS WILL MAKE THE MODULE STOP RESPONDING ON TTL
+bool DE2290H::SerialMode(DE2290H_SerialMode_t mode)
+{
+  if (mode > DE2290H_SerialMode_TTL)
+    return false;
+  
+  if (mode == DE2290H_SerialMode_COM)
+    return (sendCommand(kCmdSerialModeCOM));
+  else if (mode == DE2290H_SerialMode_HID)
+    return (sendCommand(kCmdSerialModeHID));
+  else if (mode == DE2290H_SerialMode_TTL)
+    return (sendCommand(kCmdSerialModeTTL));
+
+  return false;
+}
+
+// Enable and disable motion sensitive read mode
+// if enabling, set the sensitivity level
+bool DE2290H::enableMotionSense(DE2290H_MotionSensitivity_t sensitivity)
+{
+  if (sensitivity > DE2290H_MotionSensitivity_High)
+    return false;
+
+  if (!sendCommand(kCmdScanningModeMotionSense))
+    return false;
+
+  if (sensitivity == DE2290H_MotionSensitivity_Low)
+    return (sendCommand(kCmdMotionSenseSensitivityLow));
+  else if (sensitivity == DE2290H_MotionSensitivity_Medium)
+    return (sendCommand(kCmdMotionSenseSensitivityMedium));
+  else if (sensitivity == DE2290H_MotionSensitivity_High)
+    return (sendCommand(kCmdMotionSenseSensitivityHigh));
+
+  return false;
+}
+
+bool DE2290H::enableManualTrigger()
+{
+  return (sendCommand(kCmdScanningModeTrigger));
+}
+
+bool DE2290H::enableContinuousRead()
+{
+  return (sendCommand(kCmdScanningModeContinuous));
+}
+
+bool DE2290H::changeScanningMode(DE2290H_ScanningMode_t mode)
+{
+  if (mode > DE2290H_ScanningMode_MotionSense)
+    return false;
+
+  if (mode == DE2290H_ScanningMode_Trigger)
+    return (enableManualTrigger());
+  else if (mode == DE2290H_ScanningMode_Continuous)
+    return (enableContinuousRead());
+  else if (mode == DE2290H_ScanningMode_MotionSense)
+    return (enableMotionSense());
+
+  return false;
+}
+
+// Enable or Disable decoding of all 1D symbologies
+bool DE2290H::enableAll1D(bool enable=true)
+{
+  if (enable)
+    return (sendCommand(kCmdEnableAll1D));
+  
+  return (sendCommand(kCmdDisableAll1D));
+}
+bool DE2290H::disableAll1D()
+{
+  return enableAll1D(false);
+}
+
+// Enable or Disable decoding of all 2D symbologies
+bool DE2290H::enableAll2D(bool enable=true)
+{
+  if (enable)
+    return (sendCommand(kCmdEnableAll2D));
+  
+  return (sendCommand(kCmdDisableAll2D));
+}
+
+bool DE2290H::disableAll2D()
+{
+  return enableAll2D(false);
+}
+
+// Start or stop reading when in Trigger Mode (DEFAULT)
+// Module will automatically stop reading after a few seconds
+bool DE2290H::startScan()
+{
+  return (sendCommand(kCmdStartScan));
+}
+bool DE2290H::stopScan()
+{
+  return (sendCommand(kCmdStopScan));
+}
