@@ -230,7 +230,7 @@ bool DE2290H::changeBaudRate(DE2290H_Baud_t baud){
 }
 
 // Enable Decode Beep
-bool DE2290H::enableDecodeBeep(bool enable=true)
+bool DE2290H::enableDecodeBeep(bool enable)
 {
   if (enable)
     return (sendCommand(kCmdEnableDecodeSound));
@@ -245,7 +245,7 @@ bool DE2290H::disableDecodeBeep()
 }
 
 // Enable and Disable Beep sound on setting changes
-bool DE2290H::enableSettingBeep(bool enable=true)
+bool DE2290H::enableSettingBeep(bool enable)
 {
   if (enable)
     return (sendCommand(kCmdEnableSettingSound));
@@ -259,7 +259,7 @@ bool DE2290H::disableSettingBeep()
 }
 
 // Enable and Disable Beed sound on startup
-bool DE2290H::enableBootBeep(bool enable=true)
+bool DE2290H::enableBootBeep(bool enable)
 {
   if (enable)
     return (sendCommand(kCmdEnableBootSound));
@@ -271,9 +271,11 @@ bool DE2290H::disableBootBeep()
   return enableBootBeep(false);
 }
 
-bool DE2290H::enableAllBeep(bool enable=true)
+bool DE2290H::enableAllBeep(bool enable)
 {
   if (enable){
+    if (!sendCommand(kCmdEnableAllSound))
+      return false;
     if (!enableBootBeep())
       return false;
     if (!enableSettingBeep())
@@ -283,6 +285,8 @@ bool DE2290H::enableAllBeep(bool enable=true)
   }
 
   else{
+    if (!sendCommand(kCmdDisableAllSound))
+      return false;
     if (!disableBootBeep())
       return false;
     if (!disableSettingBeep())
@@ -322,11 +326,11 @@ bool DE2290H::changeSuccessBeepFrequency(DE2290H_Frequency_t frequency)
     return false;
 
   if (frequency == DE2290H_Frequency_Low)
-    return (sendCommand(kCmdSuccessBeepFreqLow));
+    return (sendCommand(kCmdDecodingSuccessFreqLow));
   else if (frequency == DE2290H_Frequency_Medium)
-    return (sendCommand(kCmdSuccessBeepFreqMedium));
+    return (sendCommand(kCmdDecodingSuccessFreqMedium));
   else if (frequency == DE2290H_Frequency_High)
-    return (sendCommand(kCmdSuccessBeepFreqHigh));
+    return (sendCommand(kCmdDecodingSuccessFreqHigh));
 
   return false;
 }
@@ -338,17 +342,17 @@ bool DE2290H::changeErrorBeepFrequency(DE2290H_Frequency_t frequency)
     return false;
 
   if (frequency == DE2290H_Frequency_Low)
-    return (sendCommand(kCmdErrorBeepFreqLow));
+    return (sendCommand(kCmdErrorFreqLow));
   else if (frequency == DE2290H_Frequency_Medium)
-    return (sendCommand(kCmdErrorBeepFreqMedium));
+    return (sendCommand(kCmdErrorFreqMedium));
   else if (frequency == DE2290H_Frequency_High)
-    return (sendCommand(kCmdErrorBeepFreqHigh));
+    return (sendCommand(kCmdErrorFreqHigh));
 
   return false;
 }
 
 // Control the white illumination LED
-bool DE2290H::lightOn(bool on=true)
+bool DE2290H::lightOn(bool on)
 {
   if (on)
     return (sendCommand(kCmdEnableFlashlight));
@@ -361,7 +365,7 @@ bool DE2290H::lightOff()
 }
 
 // Control the red scan line
-bool DE2290H::reticleOn(bool on=true)
+bool DE2290H::reticleOn(bool on)
 {
   if (on)
     return (sendCommand(kCmdEnableReticle));
@@ -374,7 +378,7 @@ bool DE2290H::reticleOff()
 }
 
 // Enable and Disable Mirror Image reading
-bool DE2290H::enableReverseScan(bool enable=true)
+bool DE2290H::enableReverseScan(bool enable)
 {
   if (enable){
     if (!sendCommand(kCmdEnable1DReversal))
@@ -461,7 +465,7 @@ bool DE2290H::changeScanningMode(DE2290H_ScanningMode_t mode)
 }
 
 // Enable or Disable decoding of all 1D symbologies
-bool DE2290H::enableAll1D(bool enable=true)
+bool DE2290H::enableAll1D(bool enable)
 {
   if (enable)
     return (sendCommand(kCmdEnableAll1D));
@@ -474,7 +478,7 @@ bool DE2290H::disableAll1D()
 }
 
 // Enable or Disable decoding of all 2D symbologies
-bool DE2290H::enableAll2D(bool enable=true)
+bool DE2290H::enableAll2D(bool enable)
 {
   if (enable)
     return (sendCommand(kCmdEnableAll2D));

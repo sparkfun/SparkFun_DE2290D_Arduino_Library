@@ -80,6 +80,8 @@
 #define kCmdDisable2DReversal "PdCeQbc"
 
 // Sound
+#define kCmdEnableAllSound "WaZaCb"
+#define kCmdDisableAllSound "WaZaSa"
 #define kCmdEnableBootSound "RaOdNa"
 #define kCmdDisableBootSound "RaOdXa"
 #define kCmdEnableSettingSound "WaZaZa"

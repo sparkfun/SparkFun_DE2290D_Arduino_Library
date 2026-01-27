@@ -1,8 +1,8 @@
 /*
   Menu control of scanner features
-  By: Nick Poole
+  By: SparkFun Electronics (revised from original DE2120 library by Nick Poole @SparkFun)
   SparkFun Electronics
-  Date: April 14th 2020
+  Date: January 2026
   License: This code is public domain but you buy me a beer if you use this and we meet someday (Beerware license).
 
   This example demonstrates how to get the scanner connected and will output any barcode it sees.
@@ -24,8 +24,8 @@
 #include "SoftwareSerial.h"
 SoftwareSerial softSerial(2, 3); //RX, TX: Connect Arduino pin 2 to scanner TX pin. Connect Arduino pin 3 to scanner RX pin.
 
-#include "SparkFun_DE2120_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_DE2120
-DE2120 scanner;
+#include "SparkFun_DE2290H_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_DE2290H
+DE2290H scanner;
 
 #define BUFFER_LEN 40
 char scanBuffer[BUFFER_LEN];
@@ -33,7 +33,7 @@ char scanBuffer[BUFFER_LEN];
 void setup()
 {
   Serial.begin(115200);
-  Serial.println("DE2120 Scanner Example");
+  Serial.println("DE2290H Scanner Example");
 
   if (scanner.begin(softSerial) == false)
   {
@@ -49,13 +49,13 @@ void loop()
   flushRx(); // Clear the serial rx buffer to avoid line endings
   
   Serial.println();
-  Serial.println("SparkFun DE2120 Barcode Scanner Library");
+  Serial.println("SparkFun DE2290H Barcode Scanner Library");
   Serial.println("-------------------------------------");
   Serial.println("1) Start Scan");
   Serial.println("2) Stop Scan");
   Serial.println("3) Enable/Disable Flashlight");
   Serial.println("4) Enable/Disable Aiming Reticle");
-  Serial.println("5) Set Reading Area");
+  Serial.println("5) Enable/Disable Sound");
   Serial.println("6) Set Reading Mode");
   Serial.println("7) Enable Disable Symbologies");
   Serial.println("-------------------------------------");
@@ -96,7 +96,7 @@ void loop()
         break;
 
       case '5':
-        readingArea();
+        sound();
         break;
 
       case '6':
@@ -183,60 +183,38 @@ void reticle()
   
 }
 
-  void readingArea()
-  {
-
+void sound()
+{
   flushRx(); // Clear the serial rx buffer to avoid line endings
-    
-  Serial.println("...");
-  Serial.println("...");
-  Serial.println("...");
+
+  Serial.println();
   Serial.println("-------------------------------------");
-  Serial.println("1) Full Width (Default)");
-  Serial.println("2) Center 80%");
-  Serial.println("3) Center 60%");
-  Serial.println("4) Center 40%");
-  Serial.println("5) Center 20%");
+  Serial.println("1) Enable All Sound");
+  Serial.println("2) Disable All Sound");
   Serial.println("-------------------------------------");
   Serial.println("Select an option number:");
-
   while (Serial.available() == false)
   {
     //Wait for user to send char
   }
-  
-  switch(Serial.read()){
 
-    case '1':
-      Serial.println("Scanning 100% of frame");
-      scanner.changeReadingArea(100);
-      return;
+    switch (Serial.read())
+    {
+      case '1':
+        Serial.println("All sounds enabled");
+        scanner.enableAllBeep();
+        break;
 
-    case '2':
-      Serial.println("Scanning center 80% of frame");
-      scanner.changeReadingArea(80);
-      return;
+      case '2':
+        Serial.println("All sounds disabled");
+        scanner.disableAllBeep();
+        break;
 
-    case '3':
-      Serial.println("Scanning center 60% of frame");
-      scanner.changeReadingArea(60);
-      return;
-
-    case '4':
-      Serial.println("Scanning center 40% of frame");
-      scanner.changeReadingArea(40);
-      return;
-
-    case '5':
-      Serial.println("Scanning center 20% of frame");
-      scanner.changeReadingArea(20);
-      return;
-
-    default:
-      Serial.println("Command not recognized");
-      return;
-  }
-  }
+      default:
+        Serial.println("Command not recognized");
+        break;
+    }
+}
 
   void readingMode()
   {
@@ -261,7 +239,7 @@ void reticle()
 
     case '1':
       Serial.println("Manual Trigger Mode enabled");
-      scanner.disableMotionSense();
+      scanner.enableManualTrigger();
       return;
 
     case '2':
@@ -272,6 +250,7 @@ void reticle()
     case '3':
       Serial.println("Motion Trigger Mode enabled");
       scanner.enableMotionSense();
+      Serial.println("You still have to start the scan once to begin detecting motion.")
       return;
 
     default:

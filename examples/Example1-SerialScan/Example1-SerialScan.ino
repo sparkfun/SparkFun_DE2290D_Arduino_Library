@@ -1,8 +1,7 @@
 /*
   Begin scanning for barcodes
-  By: Nick Poole
-  SparkFun Electronics
-  Date: April 14th 2020
+  By: SparkFun Electronics (revised from original DE2120 library by Nick Poole @SparkFun)
+  Date: January 2026
   License: This code is public domain but you buy me a beer if you use this and we meet someday (Beerware license).
 
   This example demonstrates how to get the scanner connected and will output any barcode it sees.
@@ -24,8 +23,8 @@
 #include "SoftwareSerial.h"
 SoftwareSerial softSerial(2, 3); //RX, TX: Connect Arduino pin 2 to scanner TX pin. Connect Arduino pin 3 to scanner RX pin.
 
-#include "SparkFun_DE2120_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_DE2120
-DE2120 scanner;
+#include "SparkFun_DE2290H_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_DE2290H
+DE2290H scanner;
 
 #define BUFFER_LEN 40
 char scanBuffer[BUFFER_LEN];
@@ -33,7 +32,7 @@ char scanBuffer[BUFFER_LEN];
 void setup()
 {
   Serial.begin(115200);
-  Serial.println("DE2120 Scanner Example");
+  Serial.println("DE2290H Scanner Example");
 
   if (scanner.begin(softSerial) == false)
   {

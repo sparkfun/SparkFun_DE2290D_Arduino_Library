@@ -1,19 +1,16 @@
 /*
   Send arbitrary commands undocumented in the library
-  By: Nick Poole
+  By: SparkFun Electronics (revised from original DE2120 library by Nick Poole @SparkFun)
   SparkFun Electronics
-  Date: April 14th 2020
+  Date: January 2026
   License: This code is public domain but you buy me a beer if you use this and we meet someday (Beerware license).
 
   This example demonstrates how to use the "sendCommand()" method to send arbitrary serial commands to the barcode reader.
   It also demonstrates the "CIDENA" or "Code ID Enable" function, which includes the barcode type when transmitting the 
   decoded string.
 
-  sendCommand() takes two strings as arguments, concatenates them, adds the command prefix "^_^" and the command suffix "."
-  and then transmits the command to the module. For example, to enable Matrix 2 of 5 scanning, which is done using the 
-  command '^_^M25ENA1.' you would make the call 'scanner.sendCommand("M25ENA", "1")'
-
-  While it is valid to call 'scanner.sendCommand("M25ENA1")' the former method is preferred in many cases.
+  sendCommand() takes two strings as arguments, concatenates them, adds the command prefix and the command suffix
+  and then transmits the command to the module.
 
   NOTE: You must put the module into TTL mode by scanning the POR232. barcode in the datasheet.
   This will put the module in the correct mode to receive and transmit serial. The baud rate in POR232
@@ -32,8 +29,8 @@
 #include "SoftwareSerial.h"
 SoftwareSerial softSerial(2, 3); //RX, TX: Connect Arduino pin 2 to scanner TX pin. Connect Arduino pin 3 to scanner RX pin.
 
-#include "SparkFun_DE2120_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_DE2120
-DE2120 scanner;
+#include "SparkFun_DE2290H_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_DE2290H
+DE2290H scanner;
 
 #define BUFFER_LEN 40
 char scanBuffer[BUFFER_LEN];
@@ -41,7 +38,7 @@ char scanBuffer[BUFFER_LEN];
 void setup()
 {
   Serial.begin(115200);
-  Serial.println("DE2120 Scanner Example");
+  Serial.println("DE2290H Scanner Example");
 
   if (scanner.begin(softSerial) == false)
   {
@@ -76,17 +73,24 @@ void loop()
     delay(200);
   }
 
+    // The "Code ID" is a character representing which barcode encoding is used in the code scanned
+    // It will be prepended to the code itself read. For example, reading code SparkFun encoded in Code-128 will return ASparkFun
+    // and reading code ABC-1234 in Code-39 will return IABC-1234. 
+
+    // For a full list of supported codes as well as a list of commands you can send with "sendCommand" check out the 2D barcode scanner setting manual in this repo.
+    // The commands we found most useful (such as kCmdEnableTransferCodeId) have been included in the SparkFun_DE2290H_Constants.h file in this repo
+    // have another command you found necessary for your project? Open a pull request! :)
     switch (Serial.read())
     {
 
       case 'y':
         Serial.println("Code ID will be displayed on scan");
-        scanner.sendCommand("CIDENA", "1");
+        scanner.sendCommand(kCmdEnableTransferCodeId);
         break;
 
       case 'n':
         Serial.println("Code ID will NOT be displayed on scan");
-        scanner.sendCommand("CIDENA", "0");
+        scanner.sendCommand(kCmdDisableTransferCodeId);
         break;
 
       default:
