@@ -1,4 +1,5 @@
 # Serial_2D_Barcode_Scanner_Library
+
 Arduino library for controlling the DE2290D 2D Barcode Scanner over serial. 
 
 NOTE: THIS IS FOR THE BARCODE SCANNER WITH V2 ON THE SILK! THE V1 SCANNER REQUIRES A DIFFERENT ARDUINO LIBRARY!
@@ -38,9 +39,9 @@ Products that use this Library
 Version History
 ---------------
 
-* [V_0.1.0](https://github.com/sparkfun/SparkFun_DE2290H_Arduino_Library/tree/v0.1.0) - Pre-release
-* [V_1.1.0](https://github.com/sparkfun/SparkFun_DE2290H_Arduino_Library/tree/v1.1.0) - Public Release
-* [V_1.2.0](https://github.com/sparkfun/SparkFun_DE2290H_Arduino_Library/tree/v1.2.0) - Cleaned Up Unused Methods
+* [V_0.1.0](https://github.com/sparkfun/SparkFun_DE2290D_Arduino_Library/tree/v0.1.0) - Pre-release
+* [V_1.1.0](https://github.com/sparkfun/SparkFun_DE2290D_Arduino_Library/tree/v1.1.0) - Public Release
+* [V_1.2.0](https://github.com/sparkfun/SparkFun_DE2290D_Arduino_Library/tree/v1.2.0) - Cleaned Up Unused Methods
 
 License Information
 -------------------

@@ -250,7 +250,7 @@ void sound()
     case '3':
       Serial.println("Motion Trigger Mode enabled");
       scanner.enableMotionSense();
-      Serial.println("You still have to start the scan once to begin detecting motion.")
+      Serial.println("You still have to start the scan once to begin detecting motion.");
       return;
 
     default:
