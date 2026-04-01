@@ -104,7 +104,7 @@ bool DE2290D::isConnected()
   //Return to 9600bps
   if (hwStream)
     hwStream->begin(9600);
-  else
+  else if (swStream)
     swStream->begin(9600);
 
   delay(10);

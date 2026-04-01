@@ -23,14 +23,11 @@
   3 = RX pin on scanner
   GND = GND
   3.3V = 3.3V
-
 */
 
 #include "SoftwareSerial.h"
-SoftwareSerial softSerial(2, 3); //RX, TX: Connect Arduino pin 2 to scanner TX pin. Connect Arduino pin 3 to scanner RX pin.
-
-#include "SparkFun_DE2290H_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_DE2290H
-DE2290H scanner;
+#include "SparkFun_DE2290D_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_DE2290D
+DE2290D scanner;
 
 #define BUFFER_LEN 40
 char scanBuffer[BUFFER_LEN];
@@ -38,9 +35,24 @@ char scanBuffer[BUFFER_LEN];
 void setup()
 {
   Serial.begin(115200);
-  Serial.println("DE2290H Scanner Example");
+  Serial.println("DE2290D Scanner Example");
 
-  if (scanner.begin(softSerial) == false)
+  // --------- Older Arduino UNO style boards ----------
+  // Uncomment the lines below and comment out the "Modern Boards" section if you are using an older board 
+  // with softSerial. Update the pins to match the connections on your board.
+  // SoftwareSerial softSerial(2, 3); //RX, TX: Connect Arduino pin 2 to scanner TX pin. Connect Arduino pin 3 to scanner RX pin.
+  // bool result = scanner.begin(softSerial);
+
+  // ------------------- Modern Boards -----------------
+  // Pass UART/SERIAL1
+  // You can pass other serials if they are available on your board (i.e. Serial2)
+  // Look up the pins corresponding to the Serial that you pass 
+  // for example, on the IoT RedBoard RP2350, UART0 corresponds to SERIAL1, with TX on pin 0 and RX on pin 1
+  // You can also initialize a HardwareSerial however, your specific board/architecture allows and pass it to begin.
+  bool result = scanner.begin(Serial1);
+  // ---------------------------------------------------
+  
+  if (result == false)
   {
     Serial.println("Scanner did not respond. Please check wiring. Did you scan the POR232 barcode? Freezing...");
     while (1)
@@ -78,7 +90,7 @@ void loop()
     // and reading code ABC-1234 in Code-39 will return IABC-1234. 
 
     // For a full list of supported codes as well as a list of commands you can send with "sendCommand" check out the 2D barcode scanner setting manual in this repo.
-    // The commands we found most useful (such as kCmdEnableTransferCodeId) have been included in the SparkFun_DE2290H_Constants.h file in this repo
+    // The commands we found most useful (such as kCmdEnableTransferCodeId) have been included in the SparkFun_DE2290D_Constants.h file in this repo
     // have another command you found necessary for your project? Open a pull request! :)
     switch (Serial.read())
     {

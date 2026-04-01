@@ -288,7 +288,6 @@ public:
  
 private:
   //char _responseBuffer[]
-
   HardwareSerial *hwStream;
   SoftwareSerial *swStream;
   Stream *_serial;
