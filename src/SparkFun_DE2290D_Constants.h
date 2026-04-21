@@ -1,25 +1,20 @@
 /*
-  This is a library written for the DE2290D 2D Barcode Scanner Engine
+    This is a library written for the DE2290D 2D Barcode Scanner Engine
 
-  SparkFun sells these at its website: www.sparkfun.com
-  
-  Do you like this library? Help support SparkFun. Buy a board!
-  https://www.sparkfun.com/products/TBD
+    SparkFun sells these at its website: www.sparkfun.com
 
-  Written by SparkFun Electronics, January, 2026
-  
-  The DE2290D is a camera-based barcode scanner
-  https://github.com/sparkfun/SparkFun_DE2290D_Arduino_Library
-  Development environment specifics:
-  
-  Arduino IDE 1.8.7
-  
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  GNU General Public License for more details.
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    Do you like this library? Help support SparkFun. Buy a board!
+    https://www.sparkfun.com/products/30942
+
+    Written by SparkFun Electronics, January, 2026
+
+    The DE2290D is a camera-based barcode scanner
+    https://github.com/sparkfun/SparkFun_DE2290D_Arduino_Library
+    Development environment specifics:
+
+    Licenced under The MIT License (MIT)
+
+    Copyright (c) 2026 SparkFun Electronics
 */
 
 #pragma once
@@ -106,7 +101,6 @@
 #define kCmdDisableFlashlight "GbWaNa"
 #define kCmdEnableReticle "GbWaZa"
 #define kCmdDisableReticle "GbWaPa"
-
 
 // ----------------      Enums      ----------------
 typedef enum
