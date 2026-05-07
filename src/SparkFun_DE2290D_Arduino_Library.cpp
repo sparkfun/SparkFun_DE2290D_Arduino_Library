@@ -22,7 +22,9 @@
 #include "SparkFun_DE2290D_Arduino_Library.h"
 #include "Arduino.h"
 
+#ifndef ESP32
 #include <SoftwareSerial.h>
+#endif
 
 // Constructor
 DE2290D::DE2290D(void)
@@ -35,7 +37,9 @@ bool DE2290D::begin(HardwareSerial &serialPort)
 {
     // Trick comes from: https://forum.arduino.cc/index.php?topic=503782.msg3435988#msg3435988
     hwStream = &serialPort;
+#ifndef ESP32
     swStream = NULL;
+#endif
     _serial = hwStream;
 
     if (isConnected() == false)
@@ -48,6 +52,7 @@ bool DE2290D::begin(HardwareSerial &serialPort)
     return true; // We're all setup!
 }
 
+#ifndef ESP32
 bool DE2290D::begin(SoftwareSerial &serialPort)
 {
     swStream = &serialPort;
@@ -63,6 +68,7 @@ bool DE2290D::begin(SoftwareSerial &serialPort)
 
     return true; // We're all setup!
 }
+#endif
 
 // Try to retrieve the firmware version number as a
 // test to determine whether the module is connected.
@@ -73,8 +79,10 @@ bool DE2290D::isConnected()
     // Attempt initial comm at 9600
     if (hwStream)
         hwStream->begin(9600);
+#ifndef ESP32
     else
         swStream->begin(9600);
+#endif
 
     if (sendCommand(kCmdGetVersion, "", 800)) // Takes ~430ms to get firmware version response
         return true;
@@ -82,8 +90,10 @@ bool DE2290D::isConnected()
     // If we failed, try again at the factory default of 115200bps
     if (hwStream)
         hwStream->begin(115200);
+#ifndef ESP32
     else
         swStream->begin(115200);
+#endif
 
     delay(10);
 
@@ -97,8 +107,10 @@ bool DE2290D::isConnected()
     // Return to 9600bps
     if (hwStream)
         hwStream->begin(9600);
+#ifndef ESP32
     else if (swStream)
         swStream->begin(9600);
+#endif
 
     delay(10);
 

@@ -26,7 +26,13 @@
   3.3V = 3.3V
 */
 
+#ifdef ESP32
+#define ESP_RX 16
+#define ESP_TX 17
+#else
 #include "SoftwareSerial.h"
+#endif
+
 #include "SparkFun_DE2290D_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_DE2290D
 DE2290D scanner;
 
@@ -37,6 +43,10 @@ void setup()
 {
     Serial.begin(115200);
     Serial.println("DE2290D Scanner Example");
+
+#ifdef ESP32
+    Serial1.begin(115200, SERIAL_8N1, ESP_RX, ESP_TX);
+#endif
 
     // --------- Older Arduino UNO style boards ----------
     // Uncomment the lines below and comment out the "Modern Boards" section if you are using an older board

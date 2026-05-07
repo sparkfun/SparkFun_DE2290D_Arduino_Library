@@ -24,7 +24,10 @@
 #include "Arduino.h"
 
 #include "SparkFun_DE2290D_Constants.h"
+
+#ifndef ESP32
 #include <SoftwareSerial.h>
+#endif
 
 class DE2290D
 {
@@ -41,12 +44,14 @@ class DE2290D
      */
     bool begin(HardwareSerial &serialPort);
 
-    /**
-     * @brief Initializes the device with a SoftwareSerial port.
-     * @param serialPort Reference to the SoftwareSerial object.
-     * @return True if initialization was successful, false otherwise.
-     */
+/**
+ * @brief Initializes the device with a SoftwareSerial port.
+ * @param serialPort Reference to the SoftwareSerial object.
+ * @return True if initialization was successful, false otherwise.
+ */
+#ifndef ESP32
     bool begin(SoftwareSerial &serialPort);
+#endif
 
     /**
      * @brief Checks if the device is connected and has the correct ID.
@@ -282,7 +287,9 @@ class DE2290D
   private:
     // char _responseBuffer[]
     HardwareSerial *hwStream;
+#ifndef ESP32
     SoftwareSerial *swStream;
+#endif
     Stream *_serial;
 };
 
